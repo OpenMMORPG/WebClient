@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OpenMMORPG Web Client</title>
+</head>
+<body>
+
+<button onclick="sendPing()">Ping</button>
+<button onclick="connect()">Connect</button>
+<button onclick="disconnect()">Disconnect</button>
+<div>
+    <p id="pingTime">Ping: ???</p>
+</div>
+<ul id="ulMessages">
+
+</ul>
+
+
+<script>
+    var ws,
+        messages = document.getElementById('ulMessages');
+
+
+    function printNewMessage(messageContent) {
+        var message = document.createElement('li'),
+            content = document.createTextNode(messageContent);
+        message.appendChild(content);
+        messages.appendChild(message);
+    }
+
+
+    function sendPing() {
+        var d = new Date();
+        var dateTime = d.toJSON();
+        data = '{"action":"ping","body": "' + dateTime + '"}'
+        ws.send(data);
+        // var message = document.createElement('li'),
+        //     content = document.createTextNode('Sent: ' + data);
+        // message.appendChild(content);
+        // messages.appendChild(message);
+    }
+
+    function connect() {
+        ws = new WebSocket('ws://localhost:8080/ws');
+        ws.onmessage = function (event) {
+            var messageJSON = JSON.parse(event.data);
+             console.log(messageJSON);
+            if (messageJSON.body.action === "ping") {
+                // console.log(messageJSON.body.body);
+                var date_now = new Date();
+                var date_pingResponse = new Date(messageJSON.body.body);
+                var utc_now = date_now;
+                var utc_pingResponse = date_pingResponse;
+                // console.log(utc_now.toJSON());
+                // console.log(date_pingResponse.toJSON());
+                pingField = document.getElementById('pingTime');
+                pingField.innerText = 'Ping: ' + (date_now - date_pingResponse) + 'ms';
+            } else {
+                var message = document.createElement('li'),
+                    content = document.createTextNode('Received unknown message: ' + event.data);
+                message.appendChild(content);
+                messages.appendChild(message);
+
+            }
+        };
+        ws.onopen = function (event) {
+            console.log(event);
+            printNewMessage("Connection opened.")
+        }
+
+        ws.onerror = function (event) {
+            console.log(event);
+            printNewMessage("Connection error.")
+        }
+
+        ws.onclose = function (event) {
+            console.log(event);
+            printNewMessage("Connection closed.")
+        }
+    }
+
+    function disconnect() {
+        ws.close();
+        ws = undefined;
+    }
+
+    connect();
+    setTimeout(sendPing, 1000);
+</script>
+</body>
+</html>
