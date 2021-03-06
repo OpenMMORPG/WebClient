@@ -86,7 +86,8 @@
     }
 
     connect();
-    setTimeout(sendPing, 1000);
+    setInterval(sendPing, 1000);
+    setInterval(connect, 50);
 </script>
 </body>
 </html>
